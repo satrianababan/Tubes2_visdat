@@ -131,10 +131,170 @@ with st.sidebar:
 
 #========================================== OVERVIEW PAGE ==================================================
 if selected == "🏠 Overview":
-    st.title("💼 Data IT Job Market Analysis 2023")
-    st.markdown("This is the overview section.")
-    # Tambahkan konten lainnya di sini
+    st.title("💼 IT Job Market Explorer 2023")
     
+    # Hero Banner
+    st.markdown("""
+    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                padding: 3rem 2rem; 
+                border-radius: 15px; 
+                color: white; 
+                margin-bottom: 2.5rem;
+                text-align: center;
+                box-shadow: 0 15px 35px rgba(102, 126, 234, 0.1);">
+        <h1 style="font-size: 2.5rem; margin-bottom: 1rem; font-weight: 300;">🚀 Welcome to Your Career Compass</h1>
+        <p style="font-size: 1.3rem; margin-bottom: 1.5rem; opacity: 0.95;">
+            Navigate the dynamic landscape of IT opportunities with confidence
+        </p>
+        <p style="font-size: 1.1rem; line-height: 1.8; opacity: 0.9; max-width: 800px; margin: 0 auto;">
+            Dive into a comprehensive analysis of the global IT job market. Whether you're a seasoned 
+            professional looking for your next challenge or a newcomer exploring career paths, this dashboard 
+            provides the insights you need to make informed decisions about your future in technology.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # What You'll Discover Section
+    st.markdown("## ✨ Discover Market Insights")
+    
+    # First row - 2 columns for better spacing
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown("""
+        <div style="background: linear-gradient(135deg, #667eea, #764ba2); 
+                    padding: 2rem; 
+                    border-radius: 15px; 
+                    margin-bottom: 1.5rem;
+                    color: white;
+                    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);">
+            <div style="font-size: 2.5rem; margin-bottom: 1rem;">🌍</div>
+            <h3 style="margin-bottom: 1rem; font-weight: 500;">Global Opportunities</h3>
+            <p style="line-height: 1.6; opacity: 0.95; margin: 0;">
+                Explore job markets across different countries and discover where your expertise is most valued worldwide.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col2:
+        st.markdown("""
+        <div style="background: linear-gradient(135deg, #4facfe, #00f2fe); 
+                    padding: 2rem; 
+                    border-radius: 15px; 
+                    margin-bottom: 1.5rem;
+                    color: white;
+                    box-shadow: 0 8px 25px rgba(79, 172, 254, 0.15);">
+            <div style="font-size: 2.5rem; margin-bottom: 1rem;">💡</div>
+            <h3 style="margin-bottom: 1rem; font-weight: 500;">Role Diversity</h3>
+            <p style="line-height: 1.6; opacity: 0.95; margin: 0;">
+                From AI engineers to UX designers, discover the full spectrum of IT careers and find your perfect match.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    # Second row - single column for market trends
+    st.markdown("""
+    <div style="background: linear-gradient(135deg, #fa709a, #fee140); 
+                padding: 2rem; 
+                border-radius: 15px; 
+                margin-bottom: 2rem;
+                color: white;
+                text-align: center;
+                box-shadow: 0 8px 25px rgba(250, 112, 154, 0.15);">
+        <div style="font-size: 2.5rem; margin-bottom: 1rem;">📊</div>
+        <h3 style="margin-bottom: 1rem; font-weight: 500;">Market Intelligence</h3>
+        <p style="line-height: 1.6; opacity: 0.95; margin: 0; max-width: 600px; margin: 0 auto;">
+            Stay ahead with comprehensive insights into salary trends, skill demands, and emerging technologies shaping the future of work.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    st.markdown("<br>", unsafe_allow_html=True)
+    
+    # Journey Steps
+    st.markdown("## 🗺️ Your Exploration Journey")
+    
+    # Create better spacing for journey steps
+    step1, step2, step3 = st.columns(3)
+    
+    with step1:
+        st.markdown("""
+        <div style="background: #f8fafc; 
+                    padding: 1.5rem; 
+                    border-radius: 12px; 
+                    text-align: center;
+                    border: 2px solid #e2e8f0;
+                    height: 180px;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;">
+            <div style="font-size: 2rem; margin-bottom: 1rem;">📍</div>
+            <h4 style="color: #667eea; margin-bottom: 0.5rem;">Explore</h4>
+            <p style="color: #4a5568; margin: 0; font-size: 0.9rem;">
+                Navigate through different sections using the sidebar
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with step2:
+        st.markdown("""
+        <div style="background: #f8fafc; 
+                    padding: 1.5rem; 
+                    border-radius: 12px; 
+                    text-align: center;
+                    border: 2px solid #e2e8f0;
+                    height: 180px;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;">
+            <div style="font-size: 2rem; margin-bottom: 1rem;">🔍</div>
+            <h4 style="color: #667eea; margin-bottom: 0.5rem;">Analyze</h4>
+            <p style="color: #4a5568; margin: 0; font-size: 0.9rem;">
+                Dive deep into salary trends and market insights
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with step3:
+        st.markdown("""
+        <div style="background: #f8fafc; 
+                    padding: 1.5rem; 
+                    border-radius: 12px; 
+                    text-align: center;
+                    border: 2px solid #e2e8f0;
+                    height: 180px;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;">
+            <div style="font-size: 2rem; margin-bottom: 1rem;">🎯</div>
+            <h4 style="color: #667eea; margin-bottom: 0.5rem;">Decide</h4>
+            <p style="color: #4a5568; margin: 0; font-size: 0.9rem;">
+                Make informed career decisions with data
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    # Call to Action
+    st.markdown("""
+    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                padding: 2.5rem; 
+                border-radius: 12px; 
+                text-align: center; 
+                color: white; 
+                margin: 2rem 0;">
+        <h3 style="margin-bottom: 1rem; font-weight: 300;">Ready to Shape Your Future? 🚀</h3>
+        <p style="font-size: 1.1rem; margin-bottom: 1.5rem; opacity: 0.95;">
+            Use the sidebar to navigate through detailed analytics and uncover the opportunities that await you in the IT industry
+        </p>
+        <div style="background: rgba(255,255,255,0.2); 
+                    padding: 0.8rem 2rem; 
+                    border-radius: 25px; 
+                    display: inline-block; 
+                    backdrop-filter: blur(10px);">
+            ✨ Start exploring now and discover your next career move!
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 #========================================== OVERVIEW PAGE ==================================================
 
 
@@ -143,12 +303,10 @@ if selected == "🏠 Overview":
 elif selected == "💰 Salary":
     st.header("💰 Salary Analysis")
     # Tambahkan plot salary di sini
-    # Page Title
-    st.title("💼 Data IT Job Market Analysis 2023")
 
     st.markdown("### 📅 Filter by Month")
         
-        # Filter month
+    # Filter month
     month_num = {
             1: "January", 2: "February", 3: "March", 4: "April", 5: "May",
             6: "June", 7: "July", 8: "August", 9: "September", 
@@ -156,7 +314,7 @@ elif selected == "💰 Salary":
         }
     month_name_to_num = {v: k for k, v in month_num.items()}
         
-        # Menambahkan opsi "All Months" di awal
+    # Menambahkan opsi "All Months" di awal
     available_months = [month_num[m] for m in sorted(
             pd.to_datetime(job_df["job_posted_date"]).dt.month.unique(), 
             key=lambda month: month
@@ -164,10 +322,10 @@ elif selected == "💰 Salary":
 
     month_options = ["All Months"] + available_months
         
-        # Selectbox dengan default "All Months"
+    # Selectbox dengan default "All Months"
     month_list = st.selectbox('Select a month', month_options, index=0)
         
-        # Set month_chosen berdasarkan pilihan
+    # Set month_chosen berdasarkan pilihan
     if month_list == "All Months":
             month_chosen = None
     else:
@@ -192,7 +350,6 @@ elif selected == "💰 Salary":
     ).reset_index()
 
     # Gunakan radio button untuk menentukan data yang ditampilkan
-
     display_df = summary_df.sort_values(by="avg_salary", ascending=False).head(10)
     chart_title = f"Top 10 Highest Paying Jobs - {display_month} 2023"
 
