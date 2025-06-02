@@ -1,9 +1,9 @@
 import streamlit as st
 import pandas as pd
-import altair as alt
 import plotly.express as px
 import plotly.graph_objects as go
 import numpy as np
+from streamlit_option_menu import option_menu
 from preprocess_viz_top_skills import preprocess_data, create_view_model_top_skills, show_top_skills
 
 
@@ -15,6 +15,19 @@ st.set_page_config(
 )
 
 import streamlit as st
+
+st.markdown(
+    """
+    <style>
+    .stApp {
+        background: linear-gradient(135deg, #152a4f 0%, #161B22 50%, #0c172d 100%);
+        color: #E6EDF3;
+        font-family: sans-serif !important
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
 
 
@@ -77,33 +90,47 @@ DARK_THEME = {
 
 
 
-
-#=========================================== SIDEBAR =======================================================
-# Sidebar
-# Read current query params
-
+# =========================================== SIDEBAR =======================================================
 with st.sidebar:
-    st.title('🚀 DataIT Job Whit What 2023')
-    st.markdown("---")
- 
-    if st.button("🏠 Overview"):
-        st.query_params.update(section="overview")
-    if st.button("💰 Salary Analysis"):
-        st.query_params.update(section="salary")
-    if st.button("🎯 Top Skills"):
-        st.query_params.update(section="skills")
-    if st.button("ℹ️ Location"):
-        st.query_params.update(section="location")
-
-    query_params = st.query_params
-    section = query_params.get("section", "overview")
-#=========================================== SIDEBAR =======================================================
+    st.markdown("<h2 style='color:white; font-weight:bold;'> 💼  Data IT</h2>", unsafe_allow_html=True)
+    selected = option_menu(
+        menu_title = "",
+        options=["🏠 Overview", "💰 Salary", "🛠️ Top Skills", "📍 Location"],
+        default_index=0,
+        styles={
+            "container": {
+                "background-color": "transparent",
+            },
+            "icon": {
+                "color": "transparent",
+                "font-size": "20px"
+            },
+            "nav-link": {
+                "font-size": "16px",
+                "text-align": "left",
+                "margin": "0.3rem 0",
+                "color": "white",
+                "border-radius": "8px",
+            },
+            "nav-link-hover": {
+                "background-color": "rgba(255, 255, 255, 0.2)",
+                "color": "white",
+                "font-weight": "bold",
+            },
+            "nav-link-selected": {
+                "background-color": "rgba(255, 255, 255, 0.2)",
+                "color": "white",
+                "font-weight": "bold",
+            }
+        }
+    )
+# =========================================== SIDEBAR =======================================================
 
 
 
 
 #========================================== OVERVIEW PAGE ==================================================
-if section == "overview":
+if selected == "🏠 Overview":
     st.title("💼 Data IT Job Market Analysis 2023")
     st.markdown("This is the overview section.")
     # Tambahkan konten lainnya di sini
@@ -115,7 +142,7 @@ if section == "overview":
 
 
 #=========================================== VARAZ =======================================================
-elif section == "salary":
+elif selected == "💰 Salary":
     st.header("💰 Salary Analysis")
     # Tambahkan plot salary di sini
     # Page Title
@@ -328,144 +355,294 @@ elif section == "salary":
 
 
 #=========================================== ROY =======================================================
-elif section == "skills":
-    st.header("🎯 Top Skills")
+elif selected == "🛠️ Top Skills":
+    st.header("🛠️ Top Skills")
     # Tambahkan visualisasi skills di sini
     def format_k(n):
         return f"{n / 1_000:.3f}K" if n >= 1_000 else str(n)
     
+    st.markdown("""
+        <style>
+        div[data-baseweb="select"] > div {
+            font-size: 20px;  /* ukuran teks dropdown */
+        }
+        label {
+            font-size: 22px;  /* ukuran label 'Job Title :' */
+            font-weight: bold;
+        }
+        </style>
+    """, unsafe_allow_html=True)
 
-    st.markdown("---")
-    st.markdown("### 🛠️ Filter Top Skills by Job Titles")
-    job_titles = sorted(job_df['job_title_short'].unique())
+    #job title short
+    job_titles = ["Select All"] + sorted(job_df['job_title_short'].unique())
 
-    selected_job_titles = st.multiselect(
-        "🎯 Pilih maksimal 3 Job Title",
+    selected_job_title = st.selectbox(
+        "Job Title :",
         options=job_titles,
-        max_selections=3
+        index=0
     )
 
-    if selected_job_titles:
-        st.markdown("---")
-        st.markdown("### 🔍 Top Skills for Selected Job Titles")
+    # type skills
+    skill_type = ["All", "programming","databases", "webframeworks", "analyst_tools", "cloud", "os","sync","async", "other"]
+    def format_label(option):
+        if option == "databases":
+            return "Databases"
+        elif option == "analyst_tools":
+            return "Tools"
+        elif option == "programming":
+            return "Languages"
+        elif option == "webframeworks":
+            return "Frameworks"
+        elif option == "cloud":
+            return "Cloud"
+        elif option == "os":
+            return "OS"
+        elif option == "other":
+            return "Other"
+        else:
+            return option
+        
 
-        filtered = df_top10_skills[df_top10_skills['job_title_short'].isin(selected_job_titles)]
-
-        # Total semua skill count gabungan (all data)
-        total_all_count = filtered['count'].sum()
-
-        # Top 10 skills secara total
-        top10_skills = (
-            filtered.groupby('skills')['count']
-            .sum()
-            .nlargest(10)
-            .index.tolist()
-        )
-
-        filtered = filtered[filtered['skills'].isin(top10_skills)]
-        skill_order = (
-            filtered.groupby('skills')['count']
-            .sum()
-            .sort_values()
-            .index.tolist()
-        )
-
-        # Urutkan job titles dari total terbesar (biar stack kiri dominan)
-        job_title_order = (
-            filtered.groupby('job_title_short')['count']
-            .sum()
-            .sort_values(ascending=False)
-            .index.tolist()
-        )
-
-        colors = ['#4ECDC4', '#FF6B6B', '#556270', '#C7F464', '#FFAA5C', '#6B5B95']
-
-        fig = go.Figure()
-
-        max_percent = 0
-
-        for i, jt in enumerate(job_title_order):
-            df_jt = (
-                filtered[filtered['job_title_short'] == jt]
-                .set_index('skills')
-                .reindex(skill_order, fill_value=0)
-                .reset_index()
-            )
-
-            # Hitung persen per bar (count / total_all_count * 100)
-            percents = [(row['count'] / total_all_count * 100) if total_all_count > 0 else 0 for _, row in df_jt.iterrows()]
-            max_percent = max(max_percent, max(percents))
-
-            # Hitung total persentase per skill (semua job digabung)
-            total_per_skill = filtered.groupby('skills')['count'].sum()
-            percent_per_skill = (total_per_skill / total_all_count * 100).round(2)
-
-            # Hitung posisi x kanan tiap bar (sum of stacked percentage per skill)
-            x_pos = [
-                sum(
-                    (filtered[(filtered['skills'] == skill) & (filtered['job_title_short'] == jt)]['count'].sum() / total_all_count * 100)
-                    for jt in job_title_order
-                )
-                for skill in skill_order
-            ]
-
-            # Tambahkan scatter trace untuk teks persentase total di kanan
-            fig.add_trace(go.Scatter(
-                x=[x+0.2 for x in x_pos],  # sedikit geser kanan biar tidak nempel bar
-                y=skill_order,
-                mode='text',
-                text=[f"{p:.2f}%" for p in percent_per_skill.loc[skill_order]],
-                textposition='middle right',
-                textfont=dict(color=DARK_THEME['text_color'], size=12),
-                showlegend=False,
-                hoverinfo='skip'
-            ))
+    selected_type_skill = st.radio(
+        "Skills :",
+        options=skill_type,
+        index=0,
+        format_func=format_label,
+        horizontal=True
+    )
 
 
-            fig.add_trace(go.Bar(
-                y=df_jt['skills'],
-                x=percents,
-                name=jt,
-                orientation='h',
-                marker_color=colors[i % len(colors)],
-                hovertemplate=(
-                    "<b>%{y}</b><br>"
-                    "📊 Percentage: %{x:.1f}%<br>"
-                    "🔢 Count: %{customdata[1]} from %{customdata[2]} data<extra></extra>"
-                ),
-                customdata=[
-                    (
-                        percents[idx],
-                        f"{row.count/1_000:.1f}K" if row.count >= 1_000 else str(row.count),
-                        f"{total_all_count/1_000:.1f}K" if total_all_count >= 1_000 else str(total_all_count)
-                    )
-                    for idx, row in enumerate(df_jt.itertuples())
-                ]
-            ))
+    # Filter data
+    filtered = df_top10_skills.copy()
+    if selected_job_title != "Select All":
+        filtered = filtered[filtered['job_title_short'] == selected_job_title]
+
+    if selected_type_skill != "All":
+        filtered = filtered[filtered['type'] == selected_type_skill]
 
 
-        # Tambahin buffer sedikit di max x axis supaya tidak pas banget
-        xaxis_max = (int(max_percent) + 8)
+    # Total job postings (unik job_id)
+    total_jobs = filtered['job_title'].nunique()
 
-        fig.update_layout(
-            barmode='stack',
-            title="Top 10 Skills Distribution for Selected Job Titles",
-            plot_bgcolor=DARK_THEME['background_color'],
-            paper_bgcolor=DARK_THEME['paper_color'],
-            font=dict(color=DARK_THEME['text_color']),
-            xaxis=dict(title='Percentage (%)', gridcolor=DARK_THEME['grid_color'], range=[0, xaxis_max]),
-            yaxis=dict(title='Skill', categoryorder='array', categoryarray=skill_order, gridcolor=DARK_THEME['grid_color']),
-            margin=dict(l=20, r=20, t=60, b=20),
-            height=600,
-            legend_title_text='Job Title',
-            hoverlabel=dict(
-                bgcolor=DARK_THEME['paper_color'],
-                bordercolor=DARK_THEME['primary_color'],
-                font_color=DARK_THEME['text_color']
-            )
-        )
+    # Hitung berapa job unik per skill
+    skill_job_counts = filtered.groupby('skills')['job_title'].nunique()
 
-        st.plotly_chart(fig, use_container_width=True)
+    # Ambil top 20 skills berdasarkan jumlah job_id (bukan count rows)
+    top10_skills = skill_job_counts.nlargest(20).index.tolist()
+
+    # Hitung persentase per skill per total job_id
+    percent_per_skill = (skill_job_counts[top10_skills] / total_jobs * 100).round(2)
+
+    # Urutkan skill berdasarkan persentase (atau tetap pakai original order, sesuai preferensi)
+    skill_order = percent_per_skill.sort_values().index.tolist()
+        
+    colorscale = px.colors.sequential.Tealgrn[::-1]
+    max_val = max(percent_per_skill[skill_order])
+    xaxis_max = max_val + 5 if max_val + 5 <= 100 else 100
+
+    bar_count = len(skill_order)
+    fig_height = 700
+    bar_slot = fig_height / bar_count
+    font_size = int(bar_slot * 0.7)  # ambil 70% dari slot, biar proporsional
+
+    fig = go.Figure()
+
+    fig.add_trace(go.Bar(
+        y=skill_order,
+        x=percent_per_skill[skill_order],
+        orientation='h',
+        marker=dict(
+            color=percent_per_skill[skill_order],
+            colorscale=colorscale,
+            line=dict(color='rgba(0,0,0,0)', width=2),
+        ),
+        hovertemplate=f"<b>%{{y}}</b><br>📊jobfair requires %{{x:.1f}}% <extra></extra>"
+    ))
+
+    annotations = []
+    for i, skill in enumerate(skill_order):
+        val = percent_per_skill[skill]
+        # Text skill di kiri
+        annotations.append(dict(
+            x=0,
+            y=skill,
+            xanchor='right',
+            yanchor='middle',
+            text=skill,
+            font=dict(color='white', size=font_size),
+            showarrow=False,
+            xshift=-10
+        ))
+        # Persentase di kanan
+        annotations.append(dict(
+            x=val,
+            y=skill,
+            xanchor='left',
+            yanchor='middle',
+            text=f"{val:.1f}%",
+            font=dict(color='white', size=font_size),
+            showarrow=False,
+            xshift=10
+        ))
+
+    fig.update_layout(
+        annotations=annotations,
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        font=dict(color='white'),
+        xaxis=dict(
+            visible=False,
+            range=[0, xaxis_max]
+        ),
+        yaxis=dict(
+            visible=False,
+            categoryorder='total ascending'
+        ),
+        margin=dict(l=150, r=40, t=60, b=40),
+        newselection_line=dict(
+            color='white',
+            dash='solid'
+        ),
+        hovermode='closest',
+        hoverlabel=dict(
+            bgcolor='#16213e',
+            bordercolor='white',
+            font=dict(color='white', size=0.75*font_size),
+        ),
+        hoverdistance=40,
+        bargap=0.3,
+        height=700
+    )
+
+
+    st.plotly_chart(fig, use_container_width=True, config={
+        'displayModeBar': True,
+        'modeBarButtonsToRemove': [
+            'zoom2d', 'pan2d', 'select2d', 'lasso2d', 'zoomIn2d', 'zoomOut2d',
+            'autoScale2d', 'resetScale2d', 'hoverClosestCartesian', 'hoverCompareCartesian',
+            'toggleSpikelines', 'toImage'
+        ],
+        'displaylogo': False
+    })
+
+
+        # filtered = df_top10_skills[df_top10_skills['job_title_short'].isin(selected_job_titles)]
+
+        # # Total semua skill count gabungan (all data)
+        # total_all_count = filtered['count'].sum()
+
+        # # Top 10 skills secara total
+        # top10_skills = (
+        #     filtered.groupby('skills')['count']
+        #     .sum()
+        #     .nlargest(10)
+        #     .index.tolist()
+        # )
+
+        # filtered = filtered[filtered['skills'].isin(top10_skills)]
+        # skill_order = (
+        #     filtered.groupby('skills')['count']
+        #     .sum()
+        #     .sort_values()
+        #     .index.tolist()
+        # )
+
+        # # Urutkan job titles dari total terbesar (biar stack kiri dominan)
+        # job_title_order = (
+        #     filtered.groupby('job_title_short')['count']
+        #     .sum()
+        #     .sort_values(ascending=False)
+        #     .index.tolist()
+        # )
+
+        # colors = ['#4ECDC4', '#FF6B6B', '#556270', '#C7F464', '#FFAA5C', '#6B5B95']
+
+        # fig = go.Figure()
+
+        # max_percent = 0
+
+        # for i, jt in enumerate(job_title_order):
+        #     df_jt = (
+        #         filtered[filtered['job_title_short'] == jt]
+        #         .set_index('skills')
+        #         .reindex(skill_order, fill_value=0)
+        #         .reset_index()
+        #     )
+
+        #     # Hitung persen per bar (count / total_all_count * 100)
+        #     percents = [(row['count'] / total_all_count * 100) if total_all_count > 0 else 0 for _, row in df_jt.iterrows()]
+        #     max_percent = max(max_percent, max(percents))
+
+        #     # Hitung total persentase per skill (semua job digabung)
+        #     total_per_skill = filtered.groupby('skills')['count'].sum()
+        #     percent_per_skill = (total_per_skill / total_all_count * 100).round(2)
+
+        #     # Hitung posisi x kanan tiap bar (sum of stacked percentage per skill)
+        #     x_pos = [
+        #         sum(
+        #             (filtered[(filtered['skills'] == skill) & (filtered['job_title_short'] == jt)]['count'].sum() / total_all_count * 100)
+        #             for jt in job_title_order
+        #         )
+        #         for skill in skill_order
+        #     ]
+
+        #     # Tambahkan scatter trace untuk teks persentase total di kanan
+        #     fig.add_trace(go.Scatter(
+        #         x=[x+0.2 for x in x_pos],  # sedikit geser kanan biar tidak nempel bar
+        #         y=skill_order,
+        #         mode='text',
+        #         text=[f"{p:.2f}%" for p in percent_per_skill.loc[skill_order]],
+        #         textposition='middle right',
+        #         textfont=dict(color=DARK_THEME['text_color'], size=12),
+        #         showlegend=False,
+        #         hoverinfo='skip'
+        #     ))
+
+
+        #     fig.add_trace(go.Bar(
+        #         y=df_jt['skills'],
+        #         x=percents,
+        #         name=jt,
+        #         orientation='h',
+        #         marker_color=colors[i % len(colors)],
+        #         hovertemplate=(
+        #             "<b>%{y}</b><br>"
+        #             "📊 Percentage: %{x:.1f}%<br>"
+        #             "🔢 Count: %{customdata[1]} from %{customdata[2]} data<extra></extra>"
+        #         ),
+        #         customdata=[
+        #             (
+        #                 percents[idx],
+        #                 f"{row.count/1_000:.1f}K" if row.count >= 1_000 else str(row.count),
+        #                 f"{total_all_count/1_000:.1f}K" if total_all_count >= 1_000 else str(total_all_count)
+        #             )
+        #             for idx, row in enumerate(df_jt.itertuples())
+        #         ]
+        #     ))
+
+
+        # # Tambahin buffer sedikit di max x axis supaya tidak pas banget
+        # xaxis_max = (int(max_percent) + 8)
+
+        # fig.update_layout(
+        #     barmode='stack',
+        #     title="Top 10 Skills Distribution for Selected Job Titles",
+        #     plot_bgcolor=DARK_THEME['background_color'],
+        #     paper_bgcolor=DARK_THEME['paper_color'],
+        #     font=dict(color=DARK_THEME['text_color']),
+        #     xaxis=dict(title='Percentage (%)', gridcolor=DARK_THEME['grid_color'], range=[0, xaxis_max]),
+        #     yaxis=dict(title='Skill', categoryorder='array', categoryarray=skill_order, gridcolor=DARK_THEME['grid_color']),
+        #     margin=dict(l=20, r=20, t=60, b=20),
+        #     height=600,
+        #     legend_title_text='Job Title',
+        #     hoverlabel=dict(
+        #         bgcolor=DARK_THEME['paper_color'],
+        #         bordercolor=DARK_THEME['primary_color'],
+        #         font_color=DARK_THEME['text_color']
+        #     )
+        # )
+
+        # st.plotly_chart(fig, use_container_width=True)
 
 #=========================================== ROY =======================================================
 
@@ -473,7 +650,7 @@ elif section == "skills":
 
 
 #=========================================== SATRIA =======================================================
-elif section == "location":
+elif selected == "📍 Location":
     st.header("ℹ️ About This Dashboard")
     st.markdown("Built with Streamlit...")
 
