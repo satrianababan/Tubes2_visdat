@@ -14,6 +14,15 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# Custom CSS
+st.markdown("""
+<style>
+div[data-testid="stSelectbox"] > div {
+    width: 300px;
+}
+</style>
+""", unsafe_allow_html=True)
+
 # Load data
 @st.cache_data
 def load_data():
@@ -57,31 +66,7 @@ with st.sidebar:
     # # Membuat radio button dengan default "All"
     # option = st.radio("Choose data view", ["All", "Only Top 10"], index=0)
     
-    st.markdown("### 📅 Filter by Month")
     
-    # Filter month
-    month_num = {
-        1: "January", 2: "February", 3: "March", 4: "April", 5: "May",
-        6: "June", 7: "July", 8: "August", 9: "September", 
-        10: "October", 11: "November", 12: "December"
-    }
-    month_name_to_num = {v: k for k, v in month_num.items()}
-    
-    # Menambahkan opsi "All Months" di awal
-    available_months = [month_num[m] for m in sorted(
-        pd.to_datetime(job_df["job_posted_date"]).dt.month.unique(), 
-        key=lambda month: month
-    )]
-    month_options = ["All Months"] + available_months
-    
-    # Selectbox dengan default "All Months"
-    month_list = st.selectbox('Select a month', month_options, index=0)
-    
-    # Set month_chosen berdasarkan pilihan
-    if month_list == "All Months":
-        month_chosen = None
-    else:
-        month_chosen = month_name_to_num[month_list]
     
     # st.markdown("---")
     # st.markdown("### 🎨 Theme Settings")
@@ -95,6 +80,38 @@ with st.sidebar:
         options=job_titles,
         max_selections=3
     )
+
+
+
+# Page Title
+st.title("💼 Data IT Job Market Analysis 2023")
+
+st.markdown("### 📅 Filter by Month")
+    
+    # Filter month
+month_num = {
+        1: "January", 2: "February", 3: "March", 4: "April", 5: "May",
+        6: "June", 7: "July", 8: "August", 9: "September", 
+        10: "October", 11: "November", 12: "December"
+    }
+month_name_to_num = {v: k for k, v in month_num.items()}
+    
+    # Menambahkan opsi "All Months" di awal
+available_months = [month_num[m] for m in sorted(
+        pd.to_datetime(job_df["job_posted_date"]).dt.month.unique(), 
+        key=lambda month: month
+    )]
+
+month_options = ["All Months"] + available_months
+    
+    # Selectbox dengan default "All Months"
+month_list = st.selectbox('Select a month', month_options, index=0)
+    
+    # Set month_chosen berdasarkan pilihan
+if month_list == "All Months":
+        month_chosen = None
+else:
+        month_chosen = month_name_to_num[month_list]
 
 # Filter berdasarkan bulan dan option
 if month_chosen is not None:
@@ -119,8 +136,6 @@ summary_df = job_df_filtered.groupby("job_title_short").agg(
 display_df = summary_df.sort_values(by="avg_salary", ascending=False).head(10)
 chart_title = f"Top 10 Highest Paying Jobs - {display_month} 2023"
 
-# Page Title
-st.title("💼 Data IT Job Market Analysis 2023")
 st.markdown(f"### Analisis untuk: **{display_month}**")
 
 # Metrics
@@ -167,7 +182,7 @@ DARK_THEME = {
     'secondary_color': '#4ECDC4',
     'success_color': '#45B7D1',
     'accent_colors': ['#FF6B6B', '#4ECDC4', '#96CEB4', '#FECA57', '#FF9FF3', '#54A0FF'],
-    'gradient_colors' : ['#B3E5FC', '#81D4FA', '#4FC3F7', '#29B6F6', '#03A9F4', '#039BE5', '#0288D1', '#0277BD', '#01579B', '#014A7A']
+    'gradient_colors' : ['#014A7A', '#01579B', '#0277BD', '#0288D1', '#039BE5', '#03A9F4', '#29B6F6', '#4FC3F7', '#81D4FA', '#B3E5FC']
 }
 
 # Chart utama
@@ -179,7 +194,7 @@ fig.add_trace(go.Bar(
     y=display_df.sort_values(by="avg_salary")["job_title_short"],
     orientation='h',
     marker=dict(
-        color=display_df.sort_values(by="avg_salary")["avg_salary"],
+        color=display_df.sort_values(by="avg_salary", ascending=False)["avg_salary"],
         # colorscale='Plasma',
         line=dict(color=DARK_THEME["gradient_colors"])
     ),
@@ -248,8 +263,11 @@ with col1:
         plot_bgcolor=DARK_THEME['background_color'],
         paper_bgcolor=DARK_THEME['paper_color'],
         font=dict(color=DARK_THEME['text_color']),
-        xaxis=dict(gridcolor=DARK_THEME['grid_color']),
-        yaxis=dict(gridcolor=DARK_THEME['grid_color']),
+        xaxis=dict(gridcolor=DARK_THEME['grid_color'], title_text="Salary Year Average"),
+         yaxis=dict(
+            gridcolor=DARK_THEME['grid_color'],
+            title_text="Number of People"  # <--- TAMBAHKAN BARIS INI atau title="Jumlah Orang"
+        ),
         bargap=0.1
     )
     
