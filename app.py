@@ -4,6 +4,8 @@ import altair as alt
 import plotly.express as px
 import plotly.graph_objects as go
 import numpy as np
+from preprocess_viz_top_skills import preprocess_data, create_view_model_top_skills, show_top_skills
+
 
 st.set_page_config(
     page_title="DataIT Job Whit What 2023",
@@ -31,12 +33,20 @@ def load_data():
     
     return pd.DataFrame(job_data)
 
+
 # load data asli
 try:
     job_df = pd.read_csv('data/job_postings_fact.csv')
+    df_skills = pd.read_csv('data/skills_dim.csv')
+    df_skills_job = pd.read_csv('data/skills_job_dim.csv')
 except:
     st.warning("Data file tidak ditemukan, menggunakan data simulasi")
     job_df = load_data()
+
+#preprocessing data top skills
+df_jobs_clean, df_skills_clean, df_skills_job_clean = preprocess_data(job_df, df_skills, df_skills_job)
+df_top10_skills = create_view_model_top_skills(df_jobs_clean, df_skills_clean, df_skills_job_clean)
+
 
 # Sidebar
 with st.sidebar:
@@ -76,6 +86,15 @@ with st.sidebar:
     # st.markdown("---")
     # st.markdown("### 🎨 Theme Settings")
     # st.info("Dark theme aktif! 🌙")
+    st.markdown("---")
+    st.markdown("### 🛠️ Filter Top Skills")
+    job_titles = sorted(job_df['job_title_short'].unique())
+
+    selected_job_titles = st.sidebar.multiselect(
+        "🎯 Pilih maksimal 3 Job Title",
+        options=job_titles,
+        max_selections=3
+    )
 
 # Filter berdasarkan bulan dan option
 if month_chosen is not None:
@@ -261,6 +280,98 @@ with col2:
     )
     
     st.plotly_chart(fig_pie, use_container_width=True)
+
+def format_k(n):
+    return f"{n / 1_000:.3f}K" if n >= 1_000 else str(n)
+
+if selected_job_titles:
+    st.markdown("---")
+    st.markdown("### 🔍 Top Skills for Selected Job Titles")
+
+    filtered = df_top10_skills[df_top10_skills['job_title_short'].isin(selected_job_titles)]
+
+    # Total semua skill count gabungan (all data)
+    total_all_count = filtered['count'].sum()
+
+    # Top 10 skills secara total
+    top10_skills = (
+        filtered.groupby('skills')['count']
+        .sum()
+        .nlargest(10)
+        .index.tolist()
+    )
+
+    filtered = filtered[filtered['skills'].isin(top10_skills)]
+    skill_order = (
+        filtered.groupby('skills')['count']
+        .sum()
+        .sort_values()
+        .index.tolist()
+    )
+
+    # Urutkan job titles dari total terbesar (biar stack kiri dominan)
+    job_title_order = (
+        filtered.groupby('job_title_short')['count']
+        .sum()
+        .sort_values(ascending=False)
+        .index.tolist()
+    )
+
+    colors = ['#4ECDC4', '#FF6B6B', '#556270', '#C7F464', '#FFAA5C', '#6B5B95']
+
+    fig = go.Figure()
+
+    for i, jt in enumerate(job_title_order):
+        df_jt = (
+            filtered[filtered['job_title_short'] == jt]
+            .set_index('skills')
+            .reindex(skill_order, fill_value=0)
+            .reset_index()
+        )
+
+        fig.add_trace(go.Bar(
+            y=df_jt['skills'],
+            x=df_jt['count'],
+            name=jt,
+            orientation='h',
+            marker_color=colors[i % len(colors)],
+            hovertemplate=(
+                "<b>%{y}</b><br>"
+                "📊 Percentage: %{customdata[0]:.1f}%<br>"
+                "🔢 Count: %{customdata[1]} from %{customdata[2]} data<extra></extra>"
+            ),
+            customdata=[
+                (
+                    (row['count'] / total_all_count * 100) if total_all_count > 0 else 0,
+                    f"{row['count']/1_000:.1f}K" if row['count'] >= 1_000 else str(row['count']),
+                    f"{total_all_count/1_000:.1f}K" if total_all_count >= 1_000 else str(total_all_count)
+                )
+                for _, row in df_jt.iterrows()
+            ]
+        ))
+
+    fig.update_layout(
+        barmode='stack',
+        title="Top 10 Skills Distribution for Selected Job Titles",
+        plot_bgcolor=DARK_THEME['background_color'],
+        paper_bgcolor=DARK_THEME['paper_color'],
+        font=dict(color=DARK_THEME['text_color']),
+        xaxis=dict(title='Count', gridcolor=DARK_THEME['grid_color']),
+        yaxis=dict(title='Skill', categoryorder='array', categoryarray=skill_order, gridcolor=DARK_THEME['grid_color']),
+        margin=dict(l=20, r=20, t=60, b=20),
+        height=600,
+        legend_title_text='Job Title',
+        hoverlabel=dict(
+            bgcolor=DARK_THEME['paper_color'],
+            bordercolor=DARK_THEME['primary_color'],
+            font_color=DARK_THEME['text_color']
+        )
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
+
+
+
 
 # Footer
 st.markdown("---")
