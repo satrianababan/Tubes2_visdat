@@ -94,7 +94,9 @@ def clean_and_split_job_types(schedule_series):
     )
 
     # Split jadi list
-    job_types_list = cleaned.apply(lambda x: [i.strip().title() for i in x.split(',') if i])
+    # job_types_list = cleaned.apply(lambda x: [i.strip().title() for i in x.split(',') if i])
+
+    job_types_list = cleaned.apply(lambda x: ', '.join([i.strip().title() for i in x.split(',') if i]))
     return job_types_list
 
 # Apply ke kolom
@@ -821,7 +823,8 @@ elif selected == "🛠️ Top Skills":
 
     # Ambil hanya baris dengan skill teratas
     filtered_top5 = filtered2[filtered2['skills'].isin(top5_skills)]
-
+    
+    
     # Hitung jumlah posting per tanggal per skill
     # Buat semua kombinasi tanggal x skill (supaya bisa isi 0)
     all_dates = pd.date_range(filtered_top5['job_posted_date'].dt.date.min(), filtered_top5['job_posted_date'].dt.date.max())
