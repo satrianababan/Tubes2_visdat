@@ -6,6 +6,7 @@ import numpy as np
 from streamlit_option_menu import option_menu
 from preprocess_viz_top_skills import preprocess_data, create_view_model_top_skills, get_time_series_skill_trend
 import pydeck as pdk
+from itertools import chain
 
 st.set_page_config(
     page_title="DataIT Job Whit What 2023",
@@ -71,6 +72,34 @@ except:
     job_df = load_data()
 
 #preprocessing data top skills
+# Mapping istilah yang tidak seragam ke bahasa Inggris
+job_df['job_schedule_type_cleaned'] = (
+    job_df['job_schedule_type']
+    .replace({
+        'Kontraktor': 'Contractor',
+        'Pekerjaan tetap': 'Full-time'
+    })
+)
+# Ubah string jadi list tipe kerja
+def clean_and_split_job_types(schedule_series):
+    cleaned = (
+        schedule_series
+        .fillna('')
+        .replace({'Kontraktor': 'Contractor', 'Pekerjaan tetap': 'Full-time'})
+        .str.lower()  # biar konsisten semua lowercase
+        .str.replace(r'\band\b', ',', regex=True)  # ubah 'and' jadi koma
+        .str.replace(r'\s*,\s*', ',', regex=True)  # hapus spasi sekitar koma
+        .str.replace(r'\s+', ' ', regex=True)  # normalisasi spasi
+        .str.strip()
+    )
+
+    # Split jadi list
+    job_types_list = cleaned.apply(lambda x: [i.strip().title() for i in x.split(',') if i])
+    return job_types_list
+
+# Apply ke kolom
+job_df['job_types_list'] = clean_and_split_job_types(job_df['job_schedule_type'])
+
 df_jobs_clean, df_skills_clean, df_skills_job_clean = preprocess_data(job_df, df_skills, df_skills_job)
 df_top10_skills = create_view_model_top_skills(df_jobs_clean, df_skills_clean, df_skills_job_clean)
 df_top5_skills_trend = get_time_series_skill_trend(df_jobs_clean, df_skills_clean, df_skills_job_clean)
@@ -585,10 +614,12 @@ elif selected == "🛠️ Top Skills":
     skill_job_counts = filtered.groupby('skills')['job_title'].nunique()
 
     # Ambil top 20 skills berdasarkan jumlah job_id (bukan count rows)
-    top10_skills = skill_job_counts.nlargest(20).index.tolist()
+    top10_skills = skill_job_counts.nlargest(20).index.dropna().tolist()
 
     # Hitung persentase per skill per total job_id
     percent_per_skill = (skill_job_counts[top10_skills] / total_jobs * 100).round(2)
+    threshold = 0.05
+    percent_per_skill = percent_per_skill[percent_per_skill >= threshold]
 
     # Urutkan skill berdasarkan persentase (atau tetap pakai original order, sesuai preferensi)
     skill_order = percent_per_skill.sort_values().index.tolist()
@@ -600,7 +631,7 @@ elif selected == "🛠️ Top Skills":
     bar_count = len(skill_order)
     fig_height = 700
     bar_slot = fig_height / bar_count
-    font_size = int(bar_slot * 0.7)  # ambil 70% dari slot, biar proporsional
+    font_size = 25
 
     fig = go.Figure()
 
@@ -642,6 +673,8 @@ elif selected == "🛠️ Top Skills":
             xshift=10
         ))
 
+    bar_height = 37
+    fig_height = max(300, bar_height * bar_count)
     fig.update_layout(
         annotations=annotations,
         plot_bgcolor='rgba(0,0,0,0)',
@@ -668,7 +701,7 @@ elif selected == "🛠️ Top Skills":
         ),
         hoverdistance=40,
         bargap=0.3,
-        height=700
+        height=fig_height,
     )
 
 
@@ -687,19 +720,35 @@ elif selected == "🛠️ Top Skills":
 
     job_titles2 = ["Select All"] + sorted(job_df['job_title_short'].unique())
 
-    selected_job_title2 = st.selectbox(
-        "Job Title :",
-        options=job_titles2,
-        key='job_title2',
+    all_job_types = sorted(set(chain.from_iterable(job_df['job_types_list'].dropna())))
+    job_type_options = ["Select All"] + all_job_types
+
+    col1, col2 = st.columns(2)  # Bagi layar jadi dua kolom sama lebar
+
+    with col1:
+        selected_job_title2 = st.selectbox(
+            "Job Title",
+            options=["Select All"] + sorted(job_df['job_title_short'].unique()),
+            key='job_title2',
+            index=0
+        )
+
+    with col2:
+        selected_job_types = st.selectbox(
+        "Job Type :",
+        options=job_type_options,
+        key='job_types',
         index=0
     )
-
-    job_type = ["Select All"] + sorted(job_df['job_schedule_type'].dropna().unique())
 
     # Filter data
     filtered2 = df_top5_skills_trend.copy()
     if selected_job_title2 != "Select All":
         filtered2 = filtered2[filtered2['job_title_short'] == selected_job_title2]
+    if selected_job_types != "Select All":
+        # Gabung dengan job_df yang punya 'job_types_list'
+        df_jobs_filtered = job_df[job_df['job_types_list'].apply(lambda lst: selected_job_types in lst)]
+        filtered2 = filtered2[filtered2['job_title'].isin(df_jobs_filtered['job_title'])]
     
     # Total job postings (unik job_id)
     total_jobs2 = filtered2['job_title'].nunique()
@@ -890,31 +939,11 @@ elif selected == "📍 Location":
 # Footer
 st.markdown("---")
 st.markdown("""
-<div style='text-align: center; color: #888; padding: 20px;'>
+<div style='text-align: center; color: #888; bottom:0'>
     <p>🚀 DataIT Job Market Analysis Dashboard</p>
+    <p> IF4061 Data Visualization </p>
     <p>Built with Streamlit • Data from 2023 Job Market</p>
 </div>
 """, unsafe_allow_html=True)
 #========================================== FOOTER ======================================================
 
-# # Sidebar instructions
-# st.sidebar.markdown("---")
-# st.sidebar.markdown("### 🛠️ Setup Instructions")
-# st.sidebar.markdown("""
-# **Untuk tema dark permanent:**
-
-# 1. Buat file `.streamlit/config.toml`:
-# ```toml
-# [theme]
-# primaryColor = "#FF6B6B"
-# backgroundColor = "#0E1117"
-# secondaryBackgroundColor = "#262730"
-# textColor = "#FAFAFA"
-# font = "sans serif"
-# ```
-
-# 2. Atau run dengan command:
-# ```bash
-# streamlit run app.py --theme.base="dark"
-# ```
-# """)
