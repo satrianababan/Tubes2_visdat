@@ -118,6 +118,20 @@ DARK_THEME = {
     'gradient_colors' : ['#014A7A', '#01579B', '#0277BD', '#0288D1', '#039BE5', '#03A9F4', '#29B6F6', '#4FC3F7', '#81D4FA', '#B3E5FC']
 }
 
+st.markdown("""
+    <style>
+        /* Ubah lebar sidebar */
+        section[data-testid="stSidebar"] {
+            width: 300px !important;
+        }
+
+        /* Ubah kontainer utama agar menyesuaikan */
+        section.main > div {
+            margin-left: 310px;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
 
 
 # =========================================== SIDEBAR =======================================================
@@ -162,85 +176,234 @@ with st.sidebar:
 #========================================== OVERVIEW PAGE ==================================================
 if selected == "🏠 Overview":
     st.title("💼 IT Job Market Explorer 2023")
-    
-    # Hero Banner
-    st.markdown("""
-    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-                padding: 3rem 2rem; 
-                border-radius: 15px; 
-                color: white; 
-                margin-bottom: 2.5rem;
-                text-align: center;
-                box-shadow: 0 15px 35px rgba(102, 126, 234, 0.1);">
-        <h1 style="font-size: 2.5rem; margin-bottom: 1rem; font-weight: 300;">🚀 Welcome to Your Career Compass</h1>
-        <p style="font-size: 1.3rem; margin-bottom: 1.5rem; opacity: 0.95;">
-            Navigate the dynamic landscape of IT opportunities with confidence
-        </p>
-        <p style="font-size: 1.1rem; line-height: 1.8; opacity: 0.9; max-width: 800px; margin: 0 auto;">
-            Dive into a comprehensive analysis of the global IT job market. Whether you're a seasoned 
-            professional looking for your next challenge or a newcomer exploring career paths, this dashboard 
-            provides the insights you need to make informed decisions about your future in technology.
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # What You'll Discover Section
-    st.markdown("## ✨ Discover Market Insights")
-    
-    # First row - 2 columns for better spacing
-    col1, col2 = st.columns(2)
-    
+    st.markdown("---")
+
+
+    # Drop NaN salary to avoid error
+    job_df_cleaned = job_df.dropna(subset=["salary_year_avg"])
+
+    # Hitung metrik
+    total_jobs = len(job_df_cleaned)
+    avg_salary = job_df_cleaned["salary_year_avg"].mean()
+
+    # Layout dua kolom
+    col1, col3, col2 = st.columns([5, 0.1, 2])
+
     with col1:
-        st.markdown("""
-        <div style="background: linear-gradient(135deg, #667eea, #764ba2); 
-                    padding: 2rem; 
-                    border-radius: 15px; 
-                    margin-bottom: 1.5rem;
-                    color: white;
-                    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);">
-            <div style="font-size: 2.5rem; margin-bottom: 1rem;">🌍</div>
-            <h3 style="margin-bottom: 1rem; font-weight: 500;">Global Opportunities</h3>
-            <p style="line-height: 1.6; opacity: 0.95; margin: 0;">
-                Explore job markets across different countries and discover where your expertise is most valued worldwide.
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
-    
+        top_jobs = (
+            job_df.groupby('job_title_short')['job_id']
+            .nunique()
+            .sort_values(ascending=False)
+            .head(5)
+            .reset_index(name='Count')
+        )
+
+        # Gradasi warna manual
+        gradient_colors = [
+            'rgba(173, 216, 230, 0.9)',  # light blue
+            'rgba(135, 206, 250, 0.9)',
+            'rgba(100, 149, 237, 0.9)',
+            'rgba(70, 130, 180, 0.9)',
+            'rgba(65, 105, 225, 0.9)'   # royal blue
+        ]
+
+        # Buat figure
+        fig = go.Figure()
+
+        for i, row in top_jobs.iterrows():
+            fig.add_trace(go.Bar(
+                x=[row['job_title_short']],
+                y=[row['Count']],
+                marker=dict(color=gradient_colors[i]),
+                hovertemplate=f"{row['job_title_short']}<br>Count: {row['Count']} Jobs<extra></extra>",
+                showlegend=False
+            ))
+
+        fig.update_layout(
+            hoverlabel=dict(
+                bgcolor='#16213e',
+                bordercolor='white',
+                font=dict(color='white', size=20),
+            ),
+            title= dict(
+                text='Top 5 Most In-Demand Data IT Job Roles',
+                x=0.5,
+                xanchor='center',
+                font=dict(size=25, color='white')
+            ),
+            xaxis=dict(
+                title='', 
+                showline=False, 
+                showticklabels=True, 
+                showgrid=False,
+                tickfont=dict(size=20)
+            ),
+            yaxis=dict(
+                visible=False  # Ini matiin semua tampilan sumbu Y
+            ),
+            plot_bgcolor='rgba(0,0,0,0)',
+            paper_bgcolor='rgba(0,0,0,0)',
+            margin=dict(l=20, r=20, t=80, b=40)
+        )
+
+        # Hapus toolbar dan disable zoom
+        config = {
+            "displayModeBar": False,
+            "scrollZoom": False
+        }
+
+        st.plotly_chart(fig, use_container_width=True, config=config)
+
     with col2:
-        st.markdown("""
-        <div style="background: linear-gradient(135deg, #4facfe, #00f2fe); 
-                    padding: 2rem; 
-                    border-radius: 15px; 
-                    margin-bottom: 1.5rem;
-                    color: white;
-                    box-shadow: 0 8px 25px rgba(79, 172, 254, 0.15);">
-            <div style="font-size: 2.5rem; margin-bottom: 1rem;">💡</div>
-            <h3 style="margin-bottom: 1rem; font-weight: 500;">Role Diversity</h3>
-            <p style="line-height: 1.6; opacity: 0.95; margin: 0;">
-                From AI engineers to UX designers, discover the full spectrum of IT careers and find your perfect match.
-            </p>
+        st.markdown(f"""
+        <div style="
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            padding: 2rem;
+            border-radius: 15px;
+            color: white;
+            text-align: center;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
+            margin-bottom: 1.5rem;
+        ">
+            <h3 style="margin-bottom: 0.5rem;">🏢 Total Jobs</h3>
+            <div style="font-size: 2rem; font-weight: 600;">{total_jobs:,} post</div>
         </div>
         """, unsafe_allow_html=True)
-    
-    # Second row - single column for market trends
-    st.markdown("""
-    <div style="background: linear-gradient(135deg, #fa709a, #fee140); 
-                padding: 2rem; 
-                border-radius: 15px; 
-                margin-bottom: 2rem;
-                color: white;
-                text-align: center;
-                box-shadow: 0 8px 25px rgba(250, 112, 154, 0.15);">
-        <div style="font-size: 2.5rem; margin-bottom: 1rem;">📊</div>
-        <h3 style="margin-bottom: 1rem; font-weight: 500;">Market Intelligence</h3>
-        <p style="line-height: 1.6; opacity: 0.95; margin: 0; max-width: 600px; margin: 0 auto;">
-            Stay ahead with comprehensive insights into salary trends, skill demands, and emerging technologies shaping the future of work.
-        </p>
-    </div>
+
+        st.markdown(f"""
+        <div style="
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+            padding: 2rem;
+            border-radius: 15px;
+            color: white;
+            text-align: center;
+            box-shadow: 0 8px 25px rgba(79, 172, 254, 0.15);
+            margin-bottom: 1.5rem;
+        ">
+            <h3 style="margin-bottom: 0.5rem;">💰 Average Salary (USD)</h3>
+            <div style="font-size: 2rem; font-weight: 600;">${avg_salary:,.0f}</div>
+        </div>
+        """, unsafe_allow_html=True)
+    with col3:
+        st.markdown("""
+        <div style="height: 100%; border-left: 2px solid #ccc;"></div>
     """, unsafe_allow_html=True)
+
+
+
+    col11, col12  = st.columns([1,1])
+
+    with col11:
+        # Mapping label format
+        def format_label(option):
+            return {
+                "databases": "Databases",
+                "analyst_tools": "Tools",
+                "programming": "Languages",
+                "webframeworks": "Frameworks",
+                "cloud": "Cloud",
+                "os": "OS",
+                "sync": "Sync",
+                "async": "Async",
+                "other": "Other"
+            }.get(option, option)
+
+        # Hitung distribusi skill type (tanpa filter)
+        type_distribution = (
+            df_top10_skills.groupby("type")["job_title"]
+            .nunique()
+            .sort_values(ascending=False)
+        )
+
+        # Format labels
+        formatted_labels = [format_label(t) for t in type_distribution.index]
+
+        # Hitung persentase
+        type_percent = (type_distribution / type_distribution.sum() * 100).round(2)
+
+        # Pie Chart
+        fig = go.Figure(data=[go.Pie(
+            labels=formatted_labels,
+            values=type_percent.values,
+            hole=0.45,
+            textinfo='label',
+            showlegend=False,
+            hovertemplate="<b>%{label}</b><br>📊 Required in %{value:.2f}% of postings<extra></extra>",
+            marker=dict(colors=px.colors.qualitative.Set3)
+        )])
+
+        fig.update_layout(
+            title= dict(
+                text='Skill Type Distribution by Percentage',
+                x=0.5,
+                xanchor='center',
+                font=dict(size=25, color='white')
+            ),
+            plot_bgcolor='rgba(0,0,0,0)',
+            paper_bgcolor='rgba(0,0,0,0)',
+            font=dict(color='white', size=15),
+            margin=dict(t=40, b=40, l=20, r=20),
+            hoverlabel=dict(
+                bgcolor='#16213e',
+                bordercolor='white',
+                font=dict(color='white', size=20),
+            ),
+            
+            
+        )
+
+        # Show it
+        st.plotly_chart(fig, use_container_width=True, config={
+            'displayModeBar': False,
+            'displaylogo': False
+        })
     
-    st.markdown("<br>", unsafe_allow_html=True)
+    with col12 :
+
+        # Hitung jumlah lokasi unik
+        n_locations = job_df['job_country'].nunique()
+
+        # Hitung jumlah job per country, urut dari terbesar
+        job_counts = job_df['job_country'].value_counts()
+
+
+        # Buat bar chart
+        fig = go.Figure(go.Bar(
+            x=job_counts.index,
+            y=job_counts.values,
+            marker_color='royalblue',
+            hovertemplate='%{x}<br>Jobs: %{y}<extra></extra>'
+        ))
+
+        fig.update_layout(
+            title= dict(
+                text='🌍 Job Locations<br><span style="font-size:16px;">Total: <b>' + str(n_locations) + ' locations</b></span>',
+                x=0.5,
+                xanchor='center',
+                font=dict(size=25, color='white')
+            ),
+            xaxis_title="",
+            yaxis_title="Number of Jobs",
+            font=dict(color='white', size=18),
+            plot_bgcolor='rgba(0,0,0,0)',
+            paper_bgcolor='rgba(0,0,0,0)',
+            margin=dict(t=40, b=40, l=40, r=40),
+            hoverlabel=dict(
+                bgcolor='#16213e',
+                bordercolor='white',
+                font=dict(color='white', size=20),
+            ),
+            hoverdistance=100
+        )
+
+        st.plotly_chart(fig, use_container_width=True, config={
+            'displayModeBar': False,
+            'displaylogo': False
+        })
+
+
     
+    st.markdown("---")
     # Journey Steps
     st.markdown("## 🗺️ Your Exploration Journey")
     
