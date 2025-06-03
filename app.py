@@ -460,14 +460,20 @@ elif selected == "💰 Salary":
         font=dict(color=DARK_THEME['text_color']),
         xaxis=dict(
             title="Average Yearly Salary (USD)",
+            title_font=dict(size=18),  # Set x-axis title font size to 18
+            title_standoff=25,         # Add space between title and tick labels
             gridcolor=DARK_THEME['grid_color'],
             zeroline=False,
-            tickformat='$,.0f'
+            tickformat='$,.0f',
+            tickfont=dict(size=14) # Optionally set tick label font size
         ),
         yaxis=dict(
             title="Job Title",
+            title_font=dict(size=18),  # Set y-axis title font size to 18
             gridcolor=DARK_THEME['grid_color'],
-            zeroline=False
+            zeroline=False,
+            # autorange="reversed", # To show highest paying job at the top
+            tickfont=dict(size=14) # Optionally set tick label font size
         ),
         margin=dict(l=20, r=20, t=60, b=20),
         height=500,
