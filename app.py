@@ -522,7 +522,7 @@ elif selected == "💰 Salary":
             ),
             yaxis=dict(
                 gridcolor=DARK_THEME['grid_color'],
-                title_text="Number of People",
+                title_text="Number of Workers",
                 title_font=dict(size=18),  # Ukuran font title y-axis
                 tickfont=dict(size=14)     # Ukuran font tick labels
             ),
