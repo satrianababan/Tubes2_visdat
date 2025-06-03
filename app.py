@@ -94,7 +94,9 @@ def clean_and_split_job_types(schedule_series):
     )
 
     # Split jadi list
-    job_types_list = cleaned.apply(lambda x: [i.strip().title() for i in x.split(',') if i])
+    # job_types_list = cleaned.apply(lambda x: [i.strip().title() for i in x.split(',') if i])
+
+    job_types_list = cleaned.apply(lambda x: ', '.join([i.strip().title() for i in x.split(',') if i]))
     return job_types_list
 
 # Apply ke kolom
@@ -139,7 +141,7 @@ with st.sidebar:
     st.markdown("<h2 style='color:white; font-weight:bold;'> 💼  Data IT</h2>", unsafe_allow_html=True)
     selected = option_menu(
         menu_title = "",
-        options=["🏠 Overview", "💰 Salary", "🛠️ Top Skills", "📍 Location"],
+        options=["🏠 Introduction", "💰 Salary", "🛠️ Top Skills", "📍 Location"],
         default_index=0,
         styles={
             "container": {
@@ -173,8 +175,8 @@ with st.sidebar:
 
 
 
-#========================================== OVERVIEW PAGE ==================================================
-if selected == "🏠 Overview":
+#========================================== Introduction PAGE ==================================================
+if selected == "🏠 Introduction":
     st.title("💼 IT Job Market Explorer 2023")
     st.markdown("---")
 
@@ -488,7 +490,7 @@ if selected == "🏠 Overview":
         </div>
     </div>
     """, unsafe_allow_html=True)
-#========================================== OVERVIEW PAGE ==================================================
+#========================================== Introduction PAGE ==================================================
 
 
 
@@ -623,14 +625,20 @@ elif selected == "💰 Salary":
         font=dict(color=DARK_THEME['text_color']),
         xaxis=dict(
             title="Average Yearly Salary (USD)",
+            title_font=dict(size=18),  # Set x-axis title font size to 18
+            title_standoff=25,         # Add space between title and tick labels
             gridcolor=DARK_THEME['grid_color'],
             zeroline=False,
-            tickformat='$,.0f'
+            tickformat='$,.0f',
+            tickfont=dict(size=14) # Optionally set tick label font size
         ),
         yaxis=dict(
             title="Job Title",
+            title_font=dict(size=18),  # Set y-axis title font size to 18
             gridcolor=DARK_THEME['grid_color'],
-            zeroline=False
+            zeroline=False,
+            # autorange="reversed", # To show highest paying job at the top
+            tickfont=dict(size=14) # Optionally set tick label font size
         ),
         margin=dict(l=20, r=20, t=60, b=20),
         height=500,
@@ -649,7 +657,7 @@ elif selected == "💰 Salary":
     col1, col2 = st.columns(2)
 
     with col1:
-        st.markdown("###  Salary Distribution")
+        # st.markdown("### 📊 Salary Distribution")
         
         fig_hist = px.histogram(
             job_df_filtered, 
@@ -659,44 +667,97 @@ elif selected == "💰 Salary":
         )
         
         fig_hist.update_layout(
-            plot_bgcolor=DARK_THEME['background_color'],
-            paper_bgcolor=DARK_THEME['paper_color'],
+            # plot_bgcolor=DARK_THEME['background_color'],
+            # paper_bgcolor=DARK_THEME['paper_color'],
             font=dict(color=DARK_THEME['text_color']),
-            xaxis=dict(gridcolor=DARK_THEME['grid_color'], title_text="Salary Year Average"),
+            title={
+                'text': "Salary Distribution",
+                'x': 0.5,  # Posisi tengah (0=kiri, 0.5=tengah, 1=kanan)
+                'xanchor': 'center',  # Anchor point di tengah
+                'y': 0.95,  # Posisi vertikal title (sama dengan pie chart)
+                'yanchor': 'top',
+                'font': {'size': 20, 'color': DARK_THEME['text_color']}
+            },
+            xaxis=dict(
+                gridcolor=DARK_THEME['grid_color'], 
+                title_text="Salary Year Average",
+                title_font=dict(size=18),  # Ukuran font title x-axis
+                tickfont=dict(size=14),    # Ukuran font tick labels
+                title_standoff=25          # Jarak title dari axis (default ~20)
+            ),
             yaxis=dict(
                 gridcolor=DARK_THEME['grid_color'],
-                title_text="Number of People"  # <--- TAMBAHKAN BARIS INI atau title="Jumlah Orang"
+                title_text="Number of Workers",
+                title_font=dict(size=18),  # Ukuran font title y-axis
+                tickfont=dict(size=14)     # Ukuran font tick labels
             ),
-            bargap=0.1
+            bargap=0.1,
+            height=600,  # Sama dengan pie chart
+            margin=dict(l=80, r=20, t=80, b=80)  # Margin yang konsisten
         )
         
-        fig_hist.update_traces(marker_color=DARK_THEME['primary_color'])
+        fig_hist.update_traces(
+            
+            textfont=dict(color=DARK_THEME['text_color'], size=12),  # Font size untuk text di pie chart
+            marker_color=DARK_THEME['primary_color'],
+             # Custom hover template
+            hovertemplate='<b>Salary Year Average:</b> %{x}<br>' +
+                        '<b>Workers:</b> %{y}<br>' +
+                        '<extra></extra>'  # Menghilangkan box tambahan
+        )
         
         st.plotly_chart(fig_hist, use_container_width=True)
 
     with col2:
-        st.markdown("###  Job Title Distribution")
-        
+    # st.markdown("###  Job Title Distribution")
+    
         job_counts = job_df_filtered["job_title_short"].value_counts().head(8)
         
         fig_pie = px.pie(
             values=job_counts.values,
             names=job_counts.index,
-            title="Job Title Distribution"
+            title="Job Distribution"
         )
         
         fig_pie.update_layout(
-            plot_bgcolor=DARK_THEME['background_color'],
-            paper_bgcolor=DARK_THEME['paper_color'],
-            font=dict(color=DARK_THEME['text_color'])
+            # plot_bgcolor=DARK_THEME['background_color'],
+            # paper_bgcolor=DARK_THEME['paper_color'],
+            title={
+                'text': "Job Distribution",
+                'x': 0.5,  # Posisi tengah (0=kiri, 0.5=tengah, 1=kanan)
+                'xanchor': 'center',  # Anchor point di tengah
+                'y': 0.95,  # Posisi vertikal title yang sama dengan histogram
+                'yanchor': 'top',
+                'font': {'size': 20, 'color': DARK_THEME['text_color']}
+            },
+            font=dict(color=DARK_THEME['text_color'], size=14),  # Font size untuk legend
+            legend=dict(
+                orientation="h",  # horizontal
+                yanchor="top",
+                y=-0.05,  # Jarak legenda diperkecil (dari -0.1 ke -0.05)
+                xanchor="center",
+                x=0.5,    # centered horizontally
+                font=dict(size=14)  # Font size legend
+            ),
+            # Mengatur margin untuk memberi ruang legend
+            margin=dict(l=20, r=20, t=80, b=80),  # Margin top sama dengan histogram, bottom dikurangi
+            # Mengatur ukuran dan posisi pie chart
+            height=600,
+            showlegend=True
         )
         
         fig_pie.update_traces(
+            domain=dict(x=[0.1, 0.9], y=[0.15, 0.85]),  # Posisi pie chart disesuaikan untuk jarak legend lebih kecil
             marker=dict(colors=DARK_THEME['accent_colors']),
-            textfont=dict(color=DARK_THEME['text_color'])
+            textfont=dict(color=DARK_THEME['text_color'], size=12),  # Font size untuk text di pie chart
+            # Custom hover template
+            hovertemplate='<b>Job:</b> %{label}<br>' +
+                        '<b>Workers:</b> %{value}<br>' +
+                        '<extra></extra>'  # Menghilangkan box tambahan
         )
         
         st.plotly_chart(fig_pie, use_container_width=True)
+
 #=========================================== VARAZ =======================================================
 
 
@@ -925,7 +986,8 @@ elif selected == "🛠️ Top Skills":
 
     # Ambil hanya baris dengan skill teratas
     filtered_top5 = filtered2[filtered2['skills'].isin(top5_skills)]
-
+    
+    
     # Hitung jumlah posting per tanggal per skill
     # Buat semua kombinasi tanggal x skill (supaya bisa isi 0)
     all_dates = pd.date_range(filtered_top5['job_posted_date'].dt.date.min(), filtered_top5['job_posted_date'].dt.date.max())
@@ -1106,7 +1168,7 @@ st.markdown("""
 <div style='text-align: center; color: #888; bottom:0'>
     <p>🚀 DataIT Job Market Analysis Dashboard</p>
     <p> IF4061 Data Visualization </p>
-    <p>Built with Streamlit • Data from 2023 Job Market</p>
+    <p>Built with Streamlit • Data from youtu.be/7mz73uXD9DA?si=ENld4zHMepWEhGw8</p>
 </div>
 """, unsafe_allow_html=True)
 #========================================== FOOTER ======================================================
