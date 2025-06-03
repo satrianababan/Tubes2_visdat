@@ -125,7 +125,7 @@ with st.sidebar:
     st.markdown("<h2 style='color:white; font-weight:bold;'> 💼  Data IT</h2>", unsafe_allow_html=True)
     selected = option_menu(
         menu_title = "",
-        options=["🏠 Overview", "💰 Salary", "🛠️ Top Skills", "📍 Location"],
+        options=["🏠 Introduction", "💰 Salary", "🛠️ Top Skills", "📍 Location"],
         default_index=0,
         styles={
             "container": {
@@ -159,8 +159,8 @@ with st.sidebar:
 
 
 
-#========================================== OVERVIEW PAGE ==================================================
-if selected == "🏠 Overview":
+#========================================== Introduction PAGE ==================================================
+if selected == "🏠 Introduction":
     st.title("💼 IT Job Market Explorer 2023")
     
     # Hero Banner
@@ -325,7 +325,7 @@ if selected == "🏠 Overview":
         </div>
     </div>
     """, unsafe_allow_html=True)
-#========================================== OVERVIEW PAGE ==================================================
+#========================================== Introduction PAGE ==================================================
 
 
 
@@ -1002,7 +1002,7 @@ st.markdown("""
 <div style='text-align: center; color: #888; bottom:0'>
     <p>🚀 DataIT Job Market Analysis Dashboard</p>
     <p> IF4061 Data Visualization </p>
-    <p>Built with Streamlit • Data from 2023 Job Market</p>
+    <p>Built with Streamlit • Data from youtu.be/7mz73uXD9DA?si=ENld4zHMepWEhGw8</p>
 </div>
 """, unsafe_allow_html=True)
 #========================================== FOOTER ======================================================
