@@ -452,10 +452,11 @@ elif selected == "💰 Salary":
         title={
             'text': chart_title,
             'font': {'size': 20, 'color': DARK_THEME['text_color']},
-            'x': 0.5
+            'x': 0.5,
+            'xanchor' : 'center',
         },
-        plot_bgcolor=DARK_THEME['background_color'],
-        paper_bgcolor=DARK_THEME['paper_color'],
+        # plot_bgcolor=DARK_THEME['background_color'],
+        # paper_bgcolor=DARK_THEME['paper_color'],
         font=dict(color=DARK_THEME['text_color']),
         xaxis=dict(
             title="Average Yearly Salary (USD)",
@@ -485,7 +486,7 @@ elif selected == "💰 Salary":
     col1, col2 = st.columns(2)
 
     with col1:
-        st.markdown("### 📊 Salary Distribution")
+        st.markdown("###  Salary Distribution")
         
         fig_hist = px.histogram(
             job_df_filtered, 
@@ -511,7 +512,7 @@ elif selected == "💰 Salary":
         st.plotly_chart(fig_hist, use_container_width=True)
 
     with col2:
-        st.markdown("### 🥧 Job Title Distribution")
+        st.markdown("###  Job Title Distribution")
         
         job_counts = job_df_filtered["job_title_short"].value_counts().head(8)
         
