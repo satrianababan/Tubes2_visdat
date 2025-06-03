@@ -4,7 +4,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import numpy as np
 from streamlit_option_menu import option_menu
-from preprocess_viz_top_skills import preprocess_data, create_view_model_top_skills, show_top_skills
+from preprocess_viz_top_skills import preprocess_data, create_view_model_top_skills, get_time_series_skill_trend
 import pydeck as pdk
 
 st.set_page_config(
@@ -73,6 +73,7 @@ except:
 #preprocessing data top skills
 df_jobs_clean, df_skills_clean, df_skills_job_clean = preprocess_data(job_df, df_skills, df_skills_job)
 df_top10_skills = create_view_model_top_skills(df_jobs_clean, df_skills_clean, df_skills_job_clean)
+df_top5_skills_trend = get_time_series_skill_trend(df_jobs_clean, df_skills_clean, df_skills_job_clean)
 
 
  # Warna tema dark yang konsisten
@@ -534,6 +535,7 @@ elif selected == "🛠️ Top Skills":
     selected_job_title = st.selectbox(
         "Job Title :",
         options=job_titles,
+        key='job_title1',
         index=0
     )
 
@@ -680,124 +682,148 @@ elif selected == "🛠️ Top Skills":
         'displaylogo': False
     })
 
+    st.markdown("---")
+    st.header("📈 Demand Skills")
 
-        # filtered = df_top10_skills[df_top10_skills['job_title_short'].isin(selected_job_titles)]
+    job_titles2 = ["Select All"] + sorted(job_df['job_title_short'].unique())
 
-        # # Total semua skill count gabungan (all data)
-        # total_all_count = filtered['count'].sum()
+    selected_job_title2 = st.selectbox(
+        "Job Title :",
+        options=job_titles2,
+        key='job_title2',
+        index=0
+    )
 
-        # # Top 10 skills secara total
-        # top10_skills = (
-        #     filtered.groupby('skills')['count']
-        #     .sum()
-        #     .nlargest(10)
-        #     .index.tolist()
-        # )
+    job_type = ["Select All"] + sorted(job_df['job_schedule_type'].dropna().unique())
 
-        # filtered = filtered[filtered['skills'].isin(top10_skills)]
-        # skill_order = (
-        #     filtered.groupby('skills')['count']
-        #     .sum()
-        #     .sort_values()
-        #     .index.tolist()
-        # )
+    # Filter data
+    filtered2 = df_top5_skills_trend.copy()
+    if selected_job_title2 != "Select All":
+        filtered2 = filtered2[filtered2['job_title_short'] == selected_job_title2]
+    
+    # Total job postings (unik job_id)
+    total_jobs2 = filtered2['job_title'].nunique()
 
-        # # Urutkan job titles dari total terbesar (biar stack kiri dominan)
-        # job_title_order = (
-        #     filtered.groupby('job_title_short')['count']
-        #     .sum()
-        #     .sort_values(ascending=False)
-        #     .index.tolist()
-        # )
+    # Hitung berapa job unik per skill
+    skill_job_counts2 = filtered2.groupby('skills')['job_title'].nunique()
 
-        # colors = ['#4ECDC4', '#FF6B6B', '#556270', '#C7F464', '#FFAA5C', '#6B5B95']
+    # Ambil top 5 skills berdasarkan jumlah job_id (bukan count rows)
+    top5_skills = skill_job_counts2.nlargest(5).index.tolist()
 
-        # fig = go.Figure()
+    # Ambil hanya baris dengan skill teratas
+    filtered_top5 = filtered2[filtered2['skills'].isin(top5_skills)]
 
-        # max_percent = 0
+    # Hitung jumlah posting per tanggal per skill
+    # Buat semua kombinasi tanggal x skill (supaya bisa isi 0)
+    all_dates = pd.date_range(filtered_top5['job_posted_date'].dt.date.min(), filtered_top5['job_posted_date'].dt.date.max())
+    all_dates= all_dates.date
+    all_combinations = pd.MultiIndex.from_product([all_dates, top5_skills], names=["job_posted_date", "skills"]).to_frame(index=False)
 
-        # for i, jt in enumerate(job_title_order):
-        #     df_jt = (
-        #         filtered[filtered['job_title_short'] == jt]
-        #         .set_index('skills')
-        #         .reindex(skill_order, fill_value=0)
-        #         .reset_index()
-        #     )
-
-        #     # Hitung persen per bar (count / total_all_count * 100)
-        #     percents = [(row['count'] / total_all_count * 100) if total_all_count > 0 else 0 for _, row in df_jt.iterrows()]
-        #     max_percent = max(max_percent, max(percents))
-
-        #     # Hitung total persentase per skill (semua job digabung)
-        #     total_per_skill = filtered.groupby('skills')['count'].sum()
-        #     percent_per_skill = (total_per_skill / total_all_count * 100).round(2)
-
-        #     # Hitung posisi x kanan tiap bar (sum of stacked percentage per skill)
-        #     x_pos = [
-        #         sum(
-        #             (filtered[(filtered['skills'] == skill) & (filtered['job_title_short'] == jt)]['count'].sum() / total_all_count * 100)
-        #             for jt in job_title_order
-        #         )
-        #         for skill in skill_order
-        #     ]
-
-        #     # Tambahkan scatter trace untuk teks persentase total di kanan
-        #     fig.add_trace(go.Scatter(
-        #         x=[x+0.2 for x in x_pos],  # sedikit geser kanan biar tidak nempel bar
-        #         y=skill_order,
-        #         mode='text',
-        #         text=[f"{p:.2f}%" for p in percent_per_skill.loc[skill_order]],
-        #         textposition='middle right',
-        #         textfont=dict(color=DARK_THEME['text_color'], size=12),
-        #         showlegend=False,
-        #         hoverinfo='skip'
-        #     ))
+    # Hitung jumlah posting per tanggal per skill
+    filtered_top5['job_posted_date'] = pd.to_datetime(filtered_top5['job_posted_date']).dt.date
+    df_trend = (
+        filtered_top5
+        .groupby(['job_posted_date', 'skills'])['job_title']
+        .nunique()
+        .reset_index(name='count')
+    )
 
 
-        #     fig.add_trace(go.Bar(
-        #         y=df_jt['skills'],
-        #         x=percents,
-        #         name=jt,
-        #         orientation='h',
-        #         marker_color=colors[i % len(colors)],
-        #         hovertemplate=(
-        #             "<b>%{y}</b><br>"
-        #             "📊 Percentage: %{x:.1f}%<br>"
-        #             "🔢 Count: %{customdata[1]} from %{customdata[2]} data<extra></extra>"
-        #         ),
-        #         customdata=[
-        #             (
-        #                 percents[idx],
-        #                 f"{row.count/1_000:.1f}K" if row.count >= 1_000 else str(row.count),
-        #                 f"{total_all_count/1_000:.1f}K" if total_all_count >= 1_000 else str(total_all_count)
-        #             )
-        #             for idx, row in enumerate(df_jt.itertuples())
-        #         ]
-        #     ))
+    # Gabungkan dengan semua kombinasi dan isi NaN dengan 0
+    df_trend_full = (
+        all_combinations
+        .merge(df_trend, on=['job_posted_date', 'skills'], how='left')
+        .fillna({'count': 0})
+        .sort_values('job_posted_date')
+    )
+
+    # Ubah count ke integer
+    df_trend_full['count'] = df_trend_full['count'].astype(int)
+
+    # Buat line chart per skill
+    fig = go.Figure()
+    for skill in top5_skills:
+        df_skill = df_trend_full[df_trend_full['skills'] == skill]
+        fig.add_trace(go.Scatter(
+            x=df_skill['job_posted_date'],
+            y=df_skill['count'],
+            mode='lines',
+            name=skill
+            
+    ))
 
 
-        # # Tambahin buffer sedikit di max x axis supaya tidak pas banget
-        # xaxis_max = (int(max_percent) + 8)
+    min_date = filtered_top5['job_posted_date'].min()
+    max_date = filtered_top5['job_posted_date'].max()
 
-        # fig.update_layout(
-        #     barmode='stack',
-        #     title="Top 10 Skills Distribution for Selected Job Titles",
-        #     plot_bgcolor=DARK_THEME['background_color'],
-        #     paper_bgcolor=DARK_THEME['paper_color'],
-        #     font=dict(color=DARK_THEME['text_color']),
-        #     xaxis=dict(title='Percentage (%)', gridcolor=DARK_THEME['grid_color'], range=[0, xaxis_max]),
-        #     yaxis=dict(title='Skill', categoryorder='array', categoryarray=skill_order, gridcolor=DARK_THEME['grid_color']),
-        #     margin=dict(l=20, r=20, t=60, b=20),
-        #     height=600,
-        #     legend_title_text='Job Title',
-        #     hoverlabel=dict(
-        #         bgcolor=DARK_THEME['paper_color'],
-        #         bordercolor=DARK_THEME['primary_color'],
-        #         font_color=DARK_THEME['text_color']
-        #     )
-        # )
+    fig.update_layout(
+        title=dict(
+            text="Top 5 Trend Skills in Demand by Time Series",
+            x=0.5,
+            xanchor='center',
+            font=dict(size=15, color='white')
+        ),
+        xaxis_title='',
+        yaxis_title='',
+        hoverdistance=100,
+        hovermode='x unified',
+        hoverlabel=dict(
+            bgcolor='black',
+            bordercolor='white',
+            font_size=14,
+            font_color='white'
+        ),
+        dragmode='pan',
+        xaxis=dict(
+            range=[min_date, max_date],
+            minallowed=min_date,
+            maxallowed=max_date,
+            type='date',
+            fixedrange=False,
+            constrain='range',
+            rangeslider=dict(visible=True, thickness=0.0),
+            showspikes=True,
+            spikemode='across',
+            spikesnap='cursor',
+            spikecolor='rgba(255, 255, 255, 0.4)',
+            spikethickness=0.05,
+            showline=True,
+            showgrid=True,
+            linecolor='white',
+            gridcolor='rgba(255,255,255,0.1)',
+            zeroline=False
+        ),
 
-        # st.plotly_chart(fig, use_container_width=True)
+
+        yaxis=dict(
+            showspikes=False,
+            spikemode='across',
+            spikesnap='cursor',
+            showline=True,
+            showgrid=True,
+            linecolor='white',
+            gridcolor='rgba(255,255,255,0.1)',
+            zeroline=False
+        ),
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        font=dict(color='white'),
+        margin=dict(l=40, r=40, t=60, b=40)
+    )
+
+    # Tampilkan di Streamlit
+    st.plotly_chart(fig, use_container_width=True, config={
+        'scrollZoom': True,  # zoom dengan scroll mouse aktif
+        'displayModeBar': True,
+        'displaylogo': False,
+        'modeBarButtons': [
+            ['pan2d', 'zoomIn2d', 'zoomOut2d', 'autoScale2d']
+        ],
+    })
+
+
+
+
 
 #=========================================== ROY =======================================================
 
